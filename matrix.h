@@ -1,13 +1,9 @@
 #ifndef MATRIX_H_
 #define MATRIX_H_
 
+#include <stdio.h>
 #include <stdbool.h>
-
-/* predefined shortcut */
-#define DECLARE_MATRIX(col, row) \
-    typedef struct { float values[col][row]; } Mat ## col ## x ## row
-DECLARE_MATRIX(3, 3);
-DECLARE_MATRIX(4, 4);
+#include <stdlib.h>
 
 typedef struct {
     int row, col;
@@ -15,7 +11,7 @@ typedef struct {
 } Matrix;
 
 typedef struct {
-    void (*assign)(Matrix *thiz, Mat4x4);
+    void (*assign)(Matrix *thiz, int, int, float **);
     bool (*equal)(const Matrix *l, const Matrix *r);
     bool (*mul)(Matrix *dst, const Matrix *l, const Matrix *r);
 } MatrixAlgo;

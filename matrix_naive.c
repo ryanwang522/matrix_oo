@@ -2,21 +2,26 @@
 #include <stdlib.h>
 
 struct naive_priv {
-    float values[4][4];
+    float **values;
 };
 
 #define PRIV(x) \
     ((struct naive_priv *) ((x)->priv))
 
-static void assign(Matrix *thiz, Mat4x4 data)
+static void assign(Matrix *thiz, int rows, int cols, float **data)
 {
-    /* FIXME: don't hardcode row & col */
-    thiz->row = thiz->col = 4;
+    thiz->row = rows;
+    thiz->col = cols;
 
-    thiz->priv = malloc(4 * 4 * sizeof(float));
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            PRIV(thiz)->values[i][j] = data.values[i][j];
+    thiz->priv = malloc(cols * rows * sizeof(float));
+
+    PRIV(thiz)->values = (float **) malloc(rows * sizeof(float *));
+    for (int i = 0; i < cols; i++)
+        PRIV(thiz)->values[i] = (float *) malloc(cols * sizeof(float));
+
+    for (int i = 0; i < rows; i++)
+        for (int j = 0; j < cols; j++)
+            PRIV(thiz)->values[i][j] = data[i][j];
 }
 
 static const float epsilon = 1 / 10000.0;
@@ -33,11 +38,24 @@ static bool equal(const Matrix *l, const Matrix *r)
 
 bool mul(Matrix *dst, const Matrix *l, const Matrix *r)
 {
-    /* FIXME: error hanlding */
-    dst->priv = malloc(4 * 4 * sizeof(float));
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            for (int k = 0; k < 4; k++)
+    if (l->col != r->row) {
+        printf("Invalid matrix multiplication with :");
+        printf("%dx%d matrix <-> %dx%d matrix", l->row, l->col, r->row, r->col);
+        return false;
+    }
+
+    dst->row = l->row;
+    dst->col = r->col;
+
+    dst->priv = malloc(dst->row * dst->col * sizeof(float));
+
+    PRIV(dst)->values = (float **) malloc(dst->row * sizeof(float *));
+    for (int i = 0; i < dst->col; i++)
+        PRIV(dst)->values[i] = (float *) malloc(dst->col * sizeof(float));
+
+    for (int i = 0; i < l->row; i++)
+        for (int j = 0; j < r->col; j++)
+            for (int k = 0; k < l->col; k++)
                 PRIV(dst)->values[i][j] += PRIV(l)->values[i][k] *
                                            PRIV(r)->values[k][j];
     return true;
